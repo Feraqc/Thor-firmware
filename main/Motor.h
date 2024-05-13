@@ -129,8 +129,10 @@ Articulacion(
       int target = (int)(move_target*steps_per_unit);
       motor1.moveTo(target);
       //motor1.setMaxSpeed(speed_target*steps_per_unit);
+      //motor1.setAcceleration(10*steps_per_unit);
       motor1.setSpeed(speed_target*steps_per_unit);
       if(stepPin2 != -1 && dirPin2 != -1){
+        motor2.moveTo(target);
         motor2.setSpeed(speed_target*steps_per_unit);
       }
     };

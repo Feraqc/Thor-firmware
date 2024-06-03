@@ -34,10 +34,9 @@ Articulacion(
     pinMode(_sensorPin, INPUT);
     maxSpeed = 1000;
     sensorPin = _sensorPin;
-    motor1.setMaxSpeed(1000.0);
-    motor1.setAcceleration(250.0);
+    motor1.setMaxSpeed(30000.0);
+    motor1.setAcceleration(10);
 }
-
 // CONSTRUCTOR DOS MOTORES
 Articulacion(
     int _dirPin1,
@@ -56,9 +55,9 @@ Articulacion(
     pinMode(_sensorPin, INPUT);
     maxSpeed = 1000;
     sensorPin = _sensorPin;
-    motor1.setMaxSpeed(30000.0);
-    motor1.setAcceleration(50.0);
-    motor2.setMaxSpeed(30000.0);
+    motor1.setMaxSpeed(1000.0);
+    motor1.setAcceleration(10.0);
+    motor2.setMaxSpeed(1000.0);
     motor2.setAcceleration(10.0);
 }
 
@@ -66,7 +65,7 @@ Articulacion(
     void setOffset(){
       Serial.println("Setting offSet");
       bool offSetFlag = false;
-      moveTo(360,10);
+      moveTo(360*steps_per_unit,20);
       while(!offSetFlag){
         motor1.runSpeedToPosition();
         if(stepPin2 != -1 && dirPin2 != -1){
@@ -103,11 +102,11 @@ Articulacion(
           minPos = motor1.currentPosition();
       }
 
-      Serial.print(maxPos);
-      Serial.print(",");
-      Serial.println(minPos);
+      //Serial.print(maxPos);
+      //Serial.print(",");
+      //Serial.println(minPos);
 
-      Serial.println("End offSet");
+      //Serial.println("End offSet");
     }
   
     void setSpeed(float motor_speed){
@@ -127,9 +126,7 @@ Articulacion(
     // falta offset
     void moveTo(float move_target,float speed_target){
       int target = (int)(move_target*steps_per_unit);
-      motor1.moveTo(target);
-      //motor1.setMaxSpeed(speed_target*steps_per_unit);
-      //motor1.setAcceleration(10*steps_per_unit);
+      motor1.moveTo(target+offSet);
       motor1.setSpeed(speed_target*steps_per_unit);
       if(stepPin2 != -1 && dirPin2 != -1){
         motor2.moveTo(target);
@@ -157,6 +154,18 @@ Articulacion(
         }
       }
     }
+
+    void run(){
+          static unsigned long startTime = millis();
+          motor1.setAcceleration(25);     
+          if(millis()-startTime <= 500){
+              motor1.run();
+          }
+          else{
+             motor1.runSpeedToPosition();     
+          }
+    }
+
 
 
 

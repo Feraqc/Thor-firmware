@@ -12,13 +12,13 @@
 #define dirPin2B 32
 #define stepPin2B 24
 #define sensorPin2 44
-#define stepsPerUnit2 236.8
+#define stepsPerUnit2 270
 
 //Articulacion 3
  #define dirPin3 30
  #define stepPin3 22
  #define sensorPin3 46
- #define stepsPerUnit3 236.8
+ #define stepsPerUnit3 275
 
 //Articulacion 4
 #define dirPin4 31
@@ -60,9 +60,10 @@ void setup() {
   pinMode(8,OUTPUT);
   digitalWrite(8,0);
   Serial.begin(9600);
-  Serial.println("enter");
+  Serial.println("begin");
   delay(1000);
-  //articulacion1.setOffSet360();
+  //articulacion2.setOffSet360();
+  //delay(1000);
   //articulacion2.setOffSet180();
 }
 void loop() {

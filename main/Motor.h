@@ -13,9 +13,9 @@ class Articulacion{
       int dirPin2;
       int sensorPin;
       float steps_per_unit;
-      float minPos;
-      float maxPos;
-      float midPos;
+      int minPos;
+      int maxPos;
+      int midPos;
       float maxSpeed;
       int offSet;
       int currentPosition;
@@ -54,11 +54,10 @@ class Articulacion{
           dirPin2 = _dirPin2;
           steps_per_unit = _steps_per_unit;
           pinMode(_sensorPin, INPUT);
-          maxSpeed = 1000;
           sensorPin = _sensorPin;
-          motor1.setMaxSpeed(1000.0);
+          motor1.setMaxSpeed(10000.0);
           motor1.setAcceleration(10.0);
-          motor2.setMaxSpeed(1000.0);
+          motor2.setMaxSpeed(10000.0);
           motor2.setAcceleration(10.0);
       }
 
@@ -111,20 +110,19 @@ class Articulacion{
 
       void setOffSet180(){
         Serial.println("Setting offSet");
-        //FIRST LIMIT
-        bool offSetFlag1 = false;
         moveTo(360*steps_per_unit,20);
-        while(!offSetFlag1){
-          static unsigned long startTime1 = millis();
+         bool offSetFlag1 = false;
+        //FIRST LIMIT
+        while(true){
+          delay(100);
           motor1.runSpeedToPosition();
-          if(stepPin2 != -1 && dirPin2 != -1){
-            motor2.runSpeedToPosition();
-          }
-          if(millis()-startTime1 > 2000){
-            offSetFlag1 = !digitalRead(sensorPin);
+          delay(100);
+          motor2.runSpeedToPosition();
+          if(!digitalRead(sensorPin)){
+            break;
           }
         }
-
+        Serial.println("salio");
         motor1.stop();
         motor1.setSpeed(0);
         if(stepPin2 != -1 && dirPin2 != -1){

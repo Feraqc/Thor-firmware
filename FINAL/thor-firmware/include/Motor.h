@@ -240,7 +240,7 @@ class Articulacion{
       }
 //***********************************************************************************************
       void Art2Ofsset(){
-        Serial.println("Reversa");
+        //Serial.println("Reversa");
         //Acostado en a caja
         while(digitalRead(sensorPin)){
           motor1.moveTo(-180*steps_per_unit);
@@ -252,13 +252,13 @@ class Articulacion{
         }
         motor1.setCurrentPosition(0);
         motor2.setCurrentPosition(0);
-        Serial.println("Primer Cero");
+        //Serial.println("Primer Cero");
         //Estamos en el cero original?
         if(digitalRead(sensorPin) == 0 ){
-          Serial.println("Reversa Poquito");
-          motor1.moveTo(-2*steps_per_unit);
-          motor2.moveTo(-2*steps_per_unit);
-          while(motor1.currentPosition() != -2*steps_per_unit || motor2.currentPosition() != -2*steps_per_unit){
+          //Serial.println("Reversa Poquito");
+          motor1.moveTo(-3*steps_per_unit);
+          motor2.moveTo(-3*steps_per_unit);
+          while(motor1.currentPosition() != -3*steps_per_unit || motor2.currentPosition() != -3*steps_per_unit){
              motor1.setSpeed(10*steps_per_unit);
              motor2.setSpeed(10*steps_per_unit);
              motor1.runSpeedToPosition();
@@ -267,7 +267,7 @@ class Articulacion{
         }
         //Si seguimos en cero estamos en el extremo del lado contrario
         if(digitalRead(sensorPin) == 0 ){
-          Serial.println("Extremo");
+          //Serial.println("Extremo");
           //Salimos del cero
           motor1.moveTo(20*steps_per_unit);
           motor2.moveTo(20*steps_per_unit);
@@ -289,7 +289,7 @@ class Articulacion{
            }
         }
         else{
-          Serial.println("Adelante Poquito");
+          //Serial.println("Adelante Poquito");
           motor1.moveTo(0*steps_per_unit);
           motor2.moveTo(0*steps_per_unit);
           while(motor1.currentPosition() != 0*steps_per_unit || motor2.currentPosition() != 0*steps_per_unit){
@@ -301,62 +301,132 @@ class Articulacion{
         }
         motor1.setCurrentPosition(0);
         motor2.setCurrentPosition(0);
-        Serial.println("Cero Encontrado");
+        //Serial.println("Cero Encontrado");
       }
 
 
-      void Art3Ofsset(){
+      // void Art3Ofsset(){
+      //   //Asumiendo por encima de la caja
+      //   //Serial.println("Salimos del cero");
+      //   motor1.moveTo(11*steps_per_unit);
+      //     while(motor1.currentPosition() != 11*steps_per_unit ){
+      //        motor1.setSpeed(10*steps_per_unit);
+      //        motor1.runSpeedToPosition();
+      //      }
+      //   while(digitalRead(sensorPin)){
+      //     motor1.moveTo(180*steps_per_unit);
+      //     motor1.setSpeed(10*steps_per_unit);
+      //     motor1.runSpeedToPosition();
+      //   }
+      //   motor1.setCurrentPosition(0);
+      //   //Serial.println("Primer Cero");
+      //   //Estamos en el cero original?
+      //   delay(3000);
+      //   if(digitalRead(sensorPin) == 0 ){
+      //     //Serial.println("Reversa Poquito");
+      //     motor1.moveTo(4*steps_per_unit);
+      //     while(motor1.currentPosition() != 4*steps_per_unit ){
+      //        motor1.setSpeed(10*steps_per_unit);
+      //        motor1.runSpeedToPosition();
+      //      }
+      //   }
+      //   //Si seguimos en cero estamos en el extremo del lado contrario
+      //   if(digitalRead(sensorPin) == 0 ){
+      //     //Serial.println("Extremo");
+      //     //Salimos del cero
+      //     motor1.moveTo(-20*steps_per_unit);
+      //     while(motor1.currentPosition() != -20*steps_per_unit){
+      //        motor1.setSpeed(10*steps_per_unit);
+      //        motor1.runSpeedToPosition();
+      //     }
+      //      //Buscamos el cero original
+      //     motor1.moveTo(-180*steps_per_unit);
+      //     while(motor1.currentPosition() != -180*steps_per_unit){
+      //        motor1.setSpeed(10*steps_per_unit);
+      //        motor1.runSpeedToPosition();
+      //        if(digitalRead(sensorPin) == 0){break;}
+      //      }
+      //   }
+      //   else{
+      //     //Serial.println("Adelante Poquito");
+      //     motor1.moveTo(0*steps_per_unit);
+      //     while(motor1.currentPosition() != 0*steps_per_unit){
+      //        motor1.setSpeed(10*steps_per_unit);
+      //        motor1.runSpeedToPosition();
+      //      }
+      //   }
+      //   motor1.setCurrentPosition(0);
+      //   //Serial.println("Cero Encontrado");
+      // }
+
+void Art3Ofsset(){
         //Asumiendo por encima de la caja
         //Serial.println("Salimos del cero");
         motor1.moveTo(11*steps_per_unit);
-          while(motor1.currentPosition() != 11*steps_per_unit ){
-             motor1.setSpeed(10*steps_per_unit);
-             motor1.runSpeedToPosition();
-           }
-        while(digitalRead(sensorPin)){
-          motor1.moveTo(180*steps_per_unit);
-          motor1.setSpeed(10*steps_per_unit);
+        while(motor1.currentPosition() != 11*steps_per_unit ){
+          motor1.setSpeed(5*steps_per_unit);
           motor1.runSpeedToPosition();
         }
-        motor1.setCurrentPosition(0);
-        //Serial.println("Primer Cero");
-        //Estamos en el cero original?
-        if(digitalRead(sensorPin) == 0 ){
-          //Serial.println("Reversa Poquito");
-          motor1.moveTo(3*steps_per_unit);
-          while(motor1.currentPosition() != 3*steps_per_unit ){
-             motor1.setSpeed(10*steps_per_unit);
-             motor1.runSpeedToPosition();
-           }
+        //Serial.println("Buscamos el cero");
+        while(digitalRead(sensorPin)){
+          motor1.moveTo(180*steps_per_unit);
+          motor1.setSpeed(5*steps_per_unit);
+          motor1.runSpeedToPosition();
         }
-        //Si seguimos en cero estamos en el extremo del lado contrario
+        
+        //Serial.println("Primer Cero");
+        
+        //Movimiento del lado contrario
+        //Serial.println("Salimos del Primer Cero encontrado");
+        motor1.moveTo(-11*steps_per_unit);
+        while(motor1.currentPosition() != -11*steps_per_unit){
+          motor1.setSpeed(10*steps_per_unit);
+          motor1.runSpeedToPosition();
+        }        
+        //Serial.println("Movimiento del lado contrario");
+        while(digitalRead(sensorPin)){
+          motor1.moveTo(-180*steps_per_unit);
+          motor1.setSpeed(5*steps_per_unit);
+          motor1.runSpeedToPosition();
+        }
+
+        motor1.setCurrentPosition(0);
+        //Serial.println("Salimos del Nuevo Cero");
+        motor1.moveTo(-11*steps_per_unit);
+        while(motor1.currentPosition() != -11*steps_per_unit ){
+          motor1.setSpeed(5*steps_per_unit);
+          motor1.runSpeedToPosition();
+        }
+
         if(digitalRead(sensorPin) == 0 ){
           //Serial.println("Extremo");
           //Salimos del cero
-          motor1.moveTo(-20*steps_per_unit);
-          while(motor1.currentPosition() != -20*steps_per_unit){
-             motor1.setSpeed(10*steps_per_unit);
+          motor1.moveTo(20*steps_per_unit);
+          while(motor1.currentPosition() != 20*steps_per_unit){
+             motor1.setSpeed(5*steps_per_unit);
              motor1.runSpeedToPosition();
           }
            //Buscamos el cero original
-          motor1.moveTo(-180*steps_per_unit);
-          while(motor1.currentPosition() != -180*steps_per_unit){
-             motor1.setSpeed(10*steps_per_unit);
+          motor1.moveTo(180*steps_per_unit);
+          while(motor1.currentPosition() != 180*steps_per_unit){
+             motor1.setSpeed(5*steps_per_unit);
              motor1.runSpeedToPosition();
              if(digitalRead(sensorPin) == 0){break;}
            }
         }
         else{
-          //Serial.println("Adelante Poquito");
+          //Serial.println("Es el cero");
           motor1.moveTo(0*steps_per_unit);
           while(motor1.currentPosition() != 0*steps_per_unit){
-             motor1.setSpeed(10*steps_per_unit);
+             motor1.setSpeed(5*steps_per_unit);
              motor1.runSpeedToPosition();
            }
         }
         motor1.setCurrentPosition(0);
-        //Serial.println("Cero Encontrado");
+        //Serial.println("Cero 3 Encontrado");
       }
+
+
       void Art360Ofsset(){
         motor1.moveTo(180*steps_per_unit);
         //Serial.println("Recorrido Positivo");

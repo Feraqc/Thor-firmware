@@ -77,7 +77,15 @@ void loop() {
     Serial.println(speed);
         switch(motorTarget){
         case 1:
-          articulacion1.moveTo(position, speed);
+          //articulacion1.moveTo(position, speed);
+          //articulacion1.motor1.setMaxSpeed(speed);
+          // articulacion1.motor1.setAcceleration(500);
+          if(position*articulacion1.steps_per_unit < articulacion1.motor1.currentPosition()){
+            speed = -speed;
+          }
+            articulacion1.motor1.setMaxSpeed(speed*articulacion1.steps_per_unit);
+            articulacion1.motor1.moveTo(position*articulacion1.steps_per_unit);
+          // articulacion1.motor1.runToPosition();
           break;
         case 2:
           articulacion2.moveTo(position, speed);
@@ -97,7 +105,7 @@ void loop() {
         }
   }
   //Serial.println(digitalRead(articulacion2.sensorPin));
-  articulacion1.motor1.runSpeedToPosition();
+  articulacion1.motor1.run();
   articulacion2.motor1.runSpeedToPosition();
   articulacion2.motor2.runSpeedToPosition();
   articulacion3.motor1.runSpeedToPosition();

@@ -30,13 +30,13 @@
 #define dirPin5 33
 #define stepPin5 25
 #define sensorPin5 49
-#define stepsPerUnit5 25
+#define stepsPerUnit5 35
 
 //Articulacion 6
 #define dirPin6 35
 #define stepPin6 27
 #define sensorPin6 47
-#define stepsPerUnit6 25
+#define stepsPerUnit6 35
 
 Articulacion articulacion1(dirPinA1,stepPinA1,sensorPin1,stepsPerUnit1);
 Articulacion articulacion2(dirPin2A,stepPin2A,dirPin2B,stepPin2B,sensorPin2,stepsPerUnit2);
@@ -58,7 +58,8 @@ void handleEmergencyStop();
 void handleInput(String cmd);
 void handleMoveWrist();
 void coordinado(float a,float b,float c);
-
+void jointVelocities(float q1,float q2, float q3, float q4, float q5);
+void articulacion5OffSet();
 
 
 enum State {
@@ -71,7 +72,8 @@ enum State {
   SET_TRAJECTORY,
   GO_TRAJECTORY,
   GO_POSE,
-  MOVE_WRIST
+  MOVE_WRIST,
+  FIND_HOME
 };
 
 State currentState;
@@ -83,6 +85,7 @@ State currentState;
   int functionParameters[maxCommands-1];
   int commandCount = 0;
   int trajectorycount = 0;
+  int lastq5 = 0;
 
   // VARIABLES ARTICULARES
   int q[6];
@@ -94,17 +97,14 @@ State currentState;
   int trajectoryBufferq5[30];
   int trajectoryBufferq6[30];
 
-  float speed1,speed2,speed3;
+  float speed1,speed2,speed3,speed4,speed5;
 
 void setup() {
   pinMode(8,OUTPUT);
+  pinMode(sensorPin6,INPUT_PULLUP);
   digitalWrite(8,0);
   Serial.begin(115200);
   currentState = WAIT_ON_COMAND;
-  //articulacion2.Art2Ofsset();
-  //articulacion1.Art360Ofsset();
-  //articulacion3.Art3Ofsset();
-  //articulacion4.Art360Ofsset();
 
 }
 
@@ -148,6 +148,16 @@ void loop() {
 
     case MOVE_WRIST:
       handleMoveWrist();
+    break;
+
+    case FIND_HOME:
+      //articulacion2.Art2Ofsset();
+      //articulacion1.Art360Ofsset();
+      //articulacion3.Art3Ofsset();
+      articulacion4.Art360Ofsset();
+      articulacion5OffSet();
+      currentState = WAIT_ON_COMAND;
+      Serial.println("WAITING COMMAND");
     break;
   }
 }
@@ -213,7 +223,12 @@ void handleWaitOnCommand(){
       } else if (function.equals("P1")) {
         //Serial.println("MOVING TOOL TO OBJECTIVE POINT");
         currentState = GO_POSE; // Set the appropriate state if defined
-      } else {
+        }
+        else if(function.equals("F00")){
+          Serial.println("FINDING HOME");
+          currentState = FIND_HOME;
+        }
+      else {
         Serial.println("Unknown command.");
       }
 
@@ -281,20 +296,27 @@ void handleMoveSpeed(){
     Serial.println("WAITING COMMAND");
   }
   else if(joint == 5){
+    alpha = alpha/2;
+    lastq5 = alpha;
+    omega = omega/2;
     articulacion5.moveTo(alpha,omega);
-    //articulacion6.moveTo(-alpha,omega);
+    articulacion6.moveTo(alpha,omega);
     while (articulacion5.motor1.distanceToGo() != 0){
       articulacion5.motor1.runSpeedToPosition();
-      //articulacion6.motor1.runSpeedToPosition();
+      articulacion6.motor1.runSpeedToPosition();
     }
     currentState = WAIT_ON_COMAND;
     Serial.println("WAITING COMMAND"); 
   }
-  else if(joint == 6){    
-    //articulacion5.moveTo(alpha,omega);
-    articulacion6.moveTo(alpha,omega);
+  else if(joint == 6){
+
+    // float delta1 = alpha - articulacion5.motor1.currentPosition();
+    // float delta2 = alpha - articulacion6.motor1.currentPosition();
+    articulacion5.moveTo(alpha,omega);
+    articulacion6.moveTo(-alpha,omega);
+    //lastq5 = 0;
     while (articulacion6.motor1.distanceToGo() != 0){
-      //articulacion5.motor1.runSpeedToPosition();
+      articulacion5.motor1.runSpeedToPosition();
       articulacion6.motor1.runSpeedToPosition();
     }
     currentState = WAIT_ON_COMAND;
@@ -519,7 +541,9 @@ void handleMoveAcceleration(){
     
     float desiredAcc = omega/5;
     articulacion5.motor1.setAcceleration(0.9*desiredAcc);
-    articulacion5.motor1.moveTo(alpha);
+    articulacion5.motor1.moveTo(alpha/2);
+    articulacion6.motor1.setAcceleration(0.9*desiredAcc);
+    articulacion6.motor1.moveTo(alpha/2);
 
     if(alpha < articulacion5.motor1.currentPosition()){
       omega = -omega;
@@ -527,37 +551,104 @@ void handleMoveAcceleration(){
       // beta2 = -beta2;
       while (abs(articulacion5.motor1.currentPosition()) >= beta1){
         articulacion5.motor1.run();
+        articulacion6.motor1.run();
       }
-      articulacion5.motor1.setSpeed(omega);
+      articulacion5.motor1.setSpeed(omega/2);
+      articulacion6.motor1.setSpeed(omega/2);
+
       while (abs(articulacion5.motor1.currentPosition()) >= beta2){
         articulacion5.motor1.runSpeedToPosition();
+        articulacion6.motor1.runSpeedToPosition();
       }
 
       while (articulacion5.motor1.distanceToGo() != 0){
         articulacion5.motor1.run();
+        articulacion6.motor1.run();
       }
     }
     else{
       while (abs(articulacion5.motor1.currentPosition()) <= beta1){
         articulacion5.motor1.run();
+        articulacion6.motor1.run();
       }
       Serial.println("BETA1 REACHED");
       //articulacion1.moveTo(beta2,omega);
       //articulacion1.motor1.moveTo(beta2);
-      articulacion5.motor1.setSpeed(omega);
+      articulacion5.motor1.setSpeed(omega/2);
+      articulacion5.motor1.setSpeed(omega/2);
       while (abs(articulacion5.motor1.currentPosition()) <= beta2){
         articulacion5.motor1.runSpeedToPosition();
+        articulacion6.motor1.runSpeedToPosition();
       }
       Serial.println("BETA2 REACHED");
       while (articulacion5.motor1.distanceToGo() != 0){
         articulacion5.motor1.run();
+        articulacion6.motor1.run();
       }
     }
 
     Serial.println("ALPHA REACHED");
     currentState = WAIT_ON_COMAND;
     Serial.println("WAITING COMMAND");   
-  }  
+  }
+  else if(joint == 6){
+    alpha = alpha*articulacion5.steps_per_unit;
+    omega = omega*articulacion5.steps_per_unit;
+    beta1 = beta1*articulacion5.steps_per_unit;
+    beta2 = beta2*articulacion5.steps_per_unit;
+    
+    float desiredAcc = omega/5;
+    articulacion5.motor1.setAcceleration(0.9*desiredAcc);
+    articulacion5.motor1.moveTo(alpha/2);
+    articulacion6.motor1.setAcceleration(0.9*desiredAcc);
+    articulacion6.motor1.moveTo(-alpha/2);
+
+    if(alpha < articulacion5.motor1.currentPosition()){
+      omega = -omega;
+      // beta1 = -beta1;
+      // beta2 = -beta2;
+      while (abs(articulacion5.motor1.currentPosition()) >= beta1){
+        articulacion5.motor1.run();
+        articulacion6.motor1.run();
+      }
+      articulacion5.motor1.setSpeed(omega/2);
+      articulacion6.motor1.setSpeed(omega/2);
+
+      while (abs(articulacion5.motor1.currentPosition()) >= beta2){
+        articulacion5.motor1.runSpeedToPosition();
+        articulacion6.motor1.runSpeedToPosition();
+      }
+
+      while (articulacion5.motor1.distanceToGo() != 0){
+        articulacion5.motor1.run();
+        articulacion6.motor1.run();
+      }
+    }
+    else{
+      while (abs(articulacion5.motor1.currentPosition()) <= beta1){
+        articulacion5.motor1.run();
+        articulacion6.motor1.run();
+      }
+      Serial.println("BETA1 REACHED");
+      //articulacion1.moveTo(beta2,omega);
+      //articulacion1.motor1.moveTo(beta2);
+      articulacion5.motor1.setSpeed(omega/2);
+      articulacion5.motor1.setSpeed(omega/2);
+      while (abs(articulacion5.motor1.currentPosition()) <= beta2){
+        articulacion5.motor1.runSpeedToPosition();
+        articulacion6.motor1.runSpeedToPosition();
+      }
+      Serial.println("BETA2 REACHED");
+      while (articulacion5.motor1.distanceToGo() != 0){
+        articulacion5.motor1.run();
+        articulacion6.motor1.run();
+      }
+    }
+
+    Serial.println("ALPHA REACHED");
+    currentState = WAIT_ON_COMAND;
+    Serial.println("WAITING COMMAND"); 
+  }
   else{
     Serial.println("JOINT NOT EXIST");
     currentState = WAIT_ON_COMAND;
@@ -565,7 +656,6 @@ void handleMoveAcceleration(){
 }
 
 void handleMoveWrist(){
-
 
   int q1 = functionParameters[0];
   int q2 = functionParameters[1];
@@ -581,7 +671,8 @@ if(movType != 0){
     articulacion3.moveTo(q3,10);
   }
   if(movType == 2){
-    coordinado(q1,q2,q3);
+    //coordinado(q1,q2,q3);
+    jointVelocities(q1,q2,q3,0,0);
     articulacion1.moveTo(q1, speed1);
     articulacion2.moveTo(q2, speed2);
     articulacion3.moveTo(q3, speed3);
@@ -605,32 +696,40 @@ void handleGoPose(){
   int q3 = functionParameters[2];
   int q4 = functionParameters[3];
   int q5 = functionParameters[4];
-  //int q6 = functionParameters[5];
+  int q6 = functionParameters[5];
   int movType = functionParameters[6];
-  Serial.println(movType);
+
   if(movType == 1){
-    Serial.println("TYPE 1");
+    //Serial.println("TYPE 1");
     articulacion1.moveTo(q1,10);
     articulacion2.moveTo(q2,10);
     articulacion3.moveTo(q3,10);
     articulacion4.moveTo(q4,10);
-    articulacion5.moveTo(q5,10);
+
+    articulacion5.moveTo(q5/2,10/2);
+    articulacion6.moveTo(q5/2,10/2);
     //articulacion6.moveTo(q6,10);
   }
   if(movType == 2){
-    coordinado(q1,q2,q3);
+    //coordinado(q1,q2,q3);
+    jointVelocities(q1,q2,q3,q4,q5);
     articulacion1.moveTo(q1, speed1);
     articulacion2.moveTo(q2, speed2);
     articulacion3.moveTo(q3, speed3);
-    articulacion4.moveTo(q4,10);
-    articulacion5.moveTo(q5,10);
+    articulacion4.moveTo(q4,speed4);
+    articulacion5.moveTo(q5/2,speed5/2);
+    articulacion6.moveTo(q5/2,speed5/2);
   }
 
-  while(!((articulacion1.motor1.distanceToGo() == 0)&&(articulacion2.motor1.distanceToGo() == 0)&&(articulacion3.motor1.distanceToGo() == 0))){
+  while(!((articulacion1.motor1.distanceToGo() == 0)&&(articulacion2.motor1.distanceToGo() == 0)&&(articulacion3.motor1.distanceToGo() == 0)&&(articulacion4.motor1.distanceToGo() == 0)&&(articulacion5.motor1.distanceToGo() == 0)&&(articulacion6.motor1.distanceToGo() == 0))){
     articulacion1.motor1.runSpeedToPosition();
     articulacion2.motor1.runSpeedToPosition();
     articulacion2.motor2.runSpeedToPosition();
     articulacion3.motor1.runSpeedToPosition();
+    articulacion4.motor1.runSpeedToPosition();
+    articulacion5.motor1.runSpeedToPosition();
+    articulacion6.motor1.runSpeedToPosition();
+
   }
   currentState = WAIT_ON_COMAND;
   Serial.println("WAITING COMMAND");
@@ -657,7 +756,7 @@ void handleGo2Home(){
   }
 
   handleSetHome();
-  Serial.println("WAINTING COMMAND");
+  Serial.println("WAITING COMMAND");
   currentState = WAIT_ON_COMAND;
   
 }
@@ -679,7 +778,7 @@ void handleSetHome(){
 void handleSetTrajectory(){
 
   trajectorycount = (commandCount-1)/3;
-  for(int i=0;i<(commandCount-1);i++){
+  for(int i=0;i<trajectorycount;i++){
     trajectoryBufferq1[i] = functionParameters[i*3];
     trajectoryBufferq2[i] = functionParameters[i*3+1];
     trajectoryBufferq3[i] = functionParameters[i*3+2];
@@ -693,15 +792,16 @@ void handleSetTrajectory(){
 void handleGoTrajectory(){
   //Serial.println("entro");
   for(int i = 0; i<trajectorycount;i++){
-    int q1 = trajectoryBufferq1[i];
-    int q2 = trajectoryBufferq2[i];
-    int q3 = trajectoryBufferq3[i];
-    // Serial.println(q1);
-    // Serial.println(q2);
-    // Serial.println(q3);
-    articulacion1.moveTo(q1,5);
-    articulacion2.moveTo(q2,5);
-    articulacion3.moveTo(q3,5);
+    float q1 = trajectoryBufferq1[i];
+    float q2 = trajectoryBufferq2[i];
+    float q3 = trajectoryBufferq3[i];
+    //Serial.println(q1);
+    //Serial.println(q2);
+    //Serial.println(q3);
+    jointVelocities(q1,q2,q3,0,0);
+    articulacion1.moveTo(q1,speed1);
+    articulacion2.moveTo(q2,speed2);
+    articulacion3.moveTo(q3,speed3);
 
     while(!((articulacion1.motor1.distanceToGo() == 0)&&(articulacion2.motor1.distanceToGo() == 0)&&(articulacion3.motor1.distanceToGo() == 0))){
       articulacion1.motor1.runSpeedToPosition();
@@ -737,4 +837,52 @@ void coordinado (float a1, float a2, float a3){
   else if(abs(pos2)>abs(pos1) && abs(pos2)>abs(pos3)){speed2 = max_speed; speed1 = abs(pos1)/(abs(pos2)/max_speed); speed3 = abs(pos3)/(abs(pos2)/max_speed);}
   else if(abs(pos3)>abs(pos2) && abs(pos3)>abs(pos1)){speed3 = max_speed; speed2 = abs(pos2)/(abs(pos3)/max_speed); speed1 = abs(pos1)/(abs(pos3)/max_speed);}
   else {speed1 = max_speed; speed2 = max_speed; speed3 = max_speed;}
+}
+
+void jointVelocities(float q1, float q2, float q3,float q4,float q5){
+    
+  float pos1 = abs((articulacion1.motor1.currentPosition()/articulacion1.steps_per_unit - q1));
+  float pos2 = abs((articulacion2.motor1.currentPosition()/articulacion2.steps_per_unit - q2));
+  float pos3 = abs((articulacion3.motor1.currentPosition()/articulacion3.steps_per_unit - q3));
+  float pos4 = abs((articulacion4.motor1.currentPosition()/articulacion4.steps_per_unit - q4));
+  float pos5 = abs((articulacion5.motor1.currentPosition()/articulacion5.steps_per_unit - q5));
+
+  float maxPos = max(pos1,max(pos2,max(pos3,max(pos4,pos5))));
+  float maxVel = 5;
+  float maxTime = maxPos/maxVel;
+
+    speed1 = pos1/maxTime;
+    speed2 = pos2/maxTime;
+    speed3 = pos3/maxTime;
+    speed4 = pos4/maxTime;
+    speed5 = pos5/maxTime;
+
+}
+
+void articulacion5OffSet(){
+
+  articulacion5.moveTo(-100,5);
+  articulacion6.moveTo(-100,5);
+
+  while (digitalRead(sensorPin6)){
+    articulacion5.motor1.runSpeedToPosition();
+    articulacion6.motor1.runSpeedToPosition();
+  }
+
+  articulacion5.motor1.setCurrentPosition(0);
+  articulacion6.motor1.setCurrentPosition(0);
+
+  Serial.println("cero");
+
+  // articulacion5.moveTo(45,5);
+  // articulacion6.moveTo(45,5);
+
+  // while (articulacion5.motor1.distanceToGo() != 0){
+  //   articulacion5.motor1.runSpeedToPosition();
+  //   articulacion6.motor1.runSpeedToPosition();
+  // }
+  
+  // articulacion5.motor1.setCurrentPosition(0);;
+  // articulacion6.motor1.setCurrentPosition(0);;
+
 }
